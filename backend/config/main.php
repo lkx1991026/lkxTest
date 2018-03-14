@@ -16,6 +16,9 @@ return [
             'class' => 'mdm\admin\Module',
         ],
     ],
+	'aliases' => [
+		'@mdm/admin' => '@vendor/mdmsoft/yii2-admin',
+	],
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-backend',
