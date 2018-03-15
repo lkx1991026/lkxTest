@@ -12,6 +12,7 @@ use app\models\CrmLog;
 use app\models\PCount;
 use backend\models\UserCount;
 use backend\models\UserTest;
+use common\helpers\car\Che300;
 use common\helpers\DateHelper;
 use common\models\WxxCity;
 use function GuzzleHttp\Psr7\str;
@@ -163,8 +164,8 @@ class TestController extends Controller
 		return $this->render('user-test',['model'=>$model]);
 	}
 	public function actionWeather(){
-		$data=WxxCity::find()->select('id,p_id pid,name')->asArray()->all();
-		$data=WxxCity::rule($data);
-		var_dump($data);exit;
+		$car =new Che300();
+		$data=$car->getModelParameters('2');
+
 	}
 }
