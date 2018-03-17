@@ -21,7 +21,8 @@
         "dmstr/yii2-adminlte-asset": "2.*",
         "jext/yii2-jrbac": "^1.0",
         "mdmsoft/yii2-admin": "~2.0",
-        "yiisoft/yii2-httpclient": "*"
+        "yiisoft/yii2-httpclient": "*",
+        "workerman/workerman-for-win": "^3.5"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.0.0",

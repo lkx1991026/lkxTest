@@ -163,9 +163,10 @@ class TestController extends Controller
 
 		return $this->render('user-test',['model'=>$model]);
 	}
-	public function actionWeather(){
-		$car =new Che300();
-		$data=$car->getModelParameters('2');
-
+	public function actionWeather($n){
+		echo $n.' ';
+		if($n>0){
+			$this->actionWeather($n-1);
+		}
 	}
 }
