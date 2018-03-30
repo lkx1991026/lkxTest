@@ -10,12 +10,20 @@ namespace backend\controllers;
 
 use app\models\CrmLog;
 use app\models\PCount;
+use backend\models\BidataChannelApply;
+use backend\models\BidataChannelStats;
+use backend\models\BidataEarnings;
+use backend\models\BidataEarningsSearch;
+use backend\models\BidataProductStats;
+use backend\models\BidataStats;
+use backend\models\BidataStatsSearch;
 use backend\models\UserCount;
 use backend\models\UserTest;
 use common\helpers\car\Che300;
 use common\helpers\DateHelper;
 use common\models\WxxCity;
 use function GuzzleHttp\Psr7\str;
+use yii\helpers\ArrayHelper;
 use yii\web\Controller;
 
 class TestController extends Controller
@@ -124,7 +132,7 @@ class TestController extends Controller
 		$register_user_count=(clone $model)->andWhere(['type'=>1])->asArray()->all();
 		$login_user_count=(clone $model)->andWhere(['type'=>0])->asArray()->all();
 		$day_list=DateHelper::getDaylist($start_time,$end_time);
-		$legend=['登录用户','注册用户'];
+		$legend=['????','????'];
 		$template=[];
 		$register=[];
 		$login=[];
@@ -144,12 +152,12 @@ class TestController extends Controller
 
 		$template=[
 			[
-				'name'=>'登录用户',
+				'name'=>'????',
 				'data'=>$login,
 				'type'=>'bar'
 			],
 			[
-				'name'=>'注册用户',
+				'name'=>'????',
 				'data'=>$register,
 				'type'=>'bar'
 			]
@@ -159,14 +167,98 @@ class TestController extends Controller
 		return $this->render('user',['legend'=>json_encode($legend),'data'=>json_encode($template),'day_list'=>json_encode($day_list)]);
 	}
 	public function actionUserTest(){
-		$model=new UserTest();
-
-		return $this->render('user-test',['model'=>$model]);
-	}
-	public function actionWeather($n){
-		echo $n.' ';
-		if($n>0){
-			$this->actionWeather($n-1);
+		$a=[['name'=>'zhangsan','age'=>'lisi','sex'=>'1']];
+		foreach($a as &$v){
+			$v['sex']=$v['sex']?'男':'女';
 		}
+		var_dump($a);
 	}
+	public function actionEarnings(){
+		$searchModel=new BidataEarningsSearch();
+		$dataProvider=$searchModel->search(\Yii::$app->request->queryParams);
+		$data=BidataEarnings::find()->where(['between','day_str',date('Ymd',strtotime('-30 day')),date('Ymd',strtotime('-1 day'))])->select(['day_str','platform_day_earnings'])->asArray()->orderBy('day_str ASC')->all();
+		$array=ArrayHelper::map($data,'day_str','platform_day_earnings');
+		$total_earnings=0;
+
+		foreach(array_values($array) as $v){
+			$total_earnings+=$v;
+		}
+		$avg_earnings=sprintf('%.2f',$total_earnings/count($data));
+		$data=['keys'=>json_encode(array_keys($array)),'value'=>json_encode(array_values($array))];
+		return $this->render('test',['data'=>$data,'total'=>$total_earnings,'avg'=>$avg_earnings,'dataProvider'=>$dataProvider,'searchModel'=>$searchModel]);
+	}
+	public function actionTotal(){
+		$data=BidataEarnings::find()->where(['between','day_str',date('Ymd',strtotime('-30 day')),date('Ymd',strtotime('-1 day'))])->select(['day_str','num_uv','num_register_user','num_active_user'])->asArray()->orderBy('day_str ASC')->all();
+		$template=[
+			[
+				'name'=>'访客数量(uv)',
+				'type'=>'line',
+				'smooth'=> true,
+			],
+
+			[
+				'name'=>'活跃用户',
+				'type'=>'line',
+				'smooth'=> true,
+			],
+			[
+			'name'=>'新增注册',
+			'type'=>'line',
+			'smooth'=> true,
+		],
+		];
+
+		$legend=['访客数量(uv)','活跃用户','新增注册'];
+		$keys=[];
+		foreach($data as $v){
+			$keys[]=$v['day_str'];
+			$template[0]['data'][]=$v['num_uv'];
+			$template[1]['data'][]=$v['num_active_user'];
+			$template[2]['data'][]=$v['num_register_user'];
+		}
+		$searchModel=new BidataStatsSearch();
+		$dataProvider=$searchModel->search(\Yii::$app->request->queryParams);
+		return $this->render('total',['legend'=>json_encode($legend),'data'=>json_encode($template),'keys'=>json_encode($keys),'searchModel'=>$searchModel,'dataProvider'=>$dataProvider]);
+	}
+	public function actionPromote(){
+
+		//子查询查询产品平均收益
+		$sub_model=BidataProductStats::find()
+			->select(['product_id','avg(one_apply_earning) avg_apply_earning'])
+			->where(['between','day_str',date('Ymd',strtotime('-30 day')),date('Ymd',strtotime('-1 day'))])
+			->groupBy('product_id');
+//		var_dump($sub_model);exit;
+		$model=BidataChannelApply::find()
+			->from('bidata_channel_apply a')
+			->where(['between','a.day_str',date('Ymd',strtotime('-7 day')),date('Ymd',strtotime('-1 day'))])
+			->leftJoin(['b'=>$sub_model],'b.product_id=a.product_id')
+			->leftJoin('bidata_channel_register c','c.user_name=a.user_name');
+		//计算预估收益前十的渠道
+		$data=(clone $model)
+			->select('c.channel_id,b.avg_apply_earning*count(a.user_name) earnings')
+			->groupBy('c.channel_id')
+			->orderBy('earnings DESC')
+			->limit(10);
+			echo $data->createCommand()->rawSql;exit;
+		//计算前十渠道对应每天的预估收益
+		$rank=(clone $model)
+			->andWhere(['channel_id'=>$data])
+			->select('c.channel_id,b.avg_apply_earning*count(a.user_name) earnings,a.day_str,channel_name')
+			->groupBy('c.channel_id,a.day_str')
+			->asArray()
+			->all();
+		var_dump($rank);
+	}
+	public function XXX($arr,$key){//第一个参数是一个二维数组,第二个参数是一个键
+		$tmp_arr=[];//保存这个二维数组下的所有一维数组中键为$key的元素值
+		foreach($arr as $k=>$v){//循环这个二维数组,注意区别这里的$k和$v分别是什么
+			if(in_array($v[$key],$tmp_arr)){//在循环出的子元素中,也就是普通的一维数组中找键为$key的元素并判断是否存在于$tmp_arr中,存在就直接将整个$v删除掉
+				unset($arr[$k]);
+			}else{
+				$tmp_arr[]=$v[$key];//不存在的话就存到里面,作为之后循环的去重的元素
+			}
+		}
+		return $arr;
+	}
+
 }

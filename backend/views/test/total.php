@@ -1,27 +1,48 @@
 <?php
 /* @var $this yii\web\View */
+use \yii\web\JsExpression;
+use \kartik\select2\Select2;
 ?>
+
+    <!---->
+    <div></div>
+    <div id="echarts" style="height: 600px;"></div>
     <div class="ad-search">
 
 		<?php $form = \yii\widgets\ActiveForm::begin([
 			'options' => ['class' => 'form-inline layui-form inline'],
-			'action' => 'earnings',
+			'action' => 'total',
 			'method' => 'get',
 		]); ?>
         <div class="layui-group">
             <div class="layui-inline pull-left" style="width: 200px;">
-                <input type="text" name="date" placeholder="请输入" autocomplete="off" class="layui-input" id="date" value="<?=Yii::$app->request->get('date')?>">
+                <input type="text" name="date" placeholder="请输入"
+                       autocomplete="off" class="layui-input" id="date"
+                       value="<?= Yii::$app->request->get('date') ?>"/>
             </div>
+			<?= $form->field($searchModel, 'app_id')->dropDownList(Yii::$app->params['app_list'], ['prompt' => '全部']) ?>
+			<?= Select2::widget([
+				'name' => 'filter[front]',
+				'options' => ['placeholder' => '请选择前端'],
+				'data' => Yii::$app->params['app_front_list'],
+				'theme' => Select2::THEME_BOOTSTRAP,
+
+				'pluginOptions' => [
+					'allowClear' => true,
+					'width' => '255px',
+					'multiple' => true,
+				],
+            ])
+			 ?>
             <span class="layui-btn-group" style="border-left: 100px;">
-                    <button class="layui-btn pull-left layui-anim layui-anim-scaleSpring layui-anim-loop " id="ajax-submit" >立即提交</button>
-                    <button type="reset" class="layui-btn layui-btn-primary pull-left">重置</button>
+                <button class="layui-btn pull-left layui-anim layui-anim-scaleSpring layui-anim-loop "
+                        id="ajax-submit">立即提交</button>
+                <button type="reset"
+                        class="layui-btn layui-btn-primary pull-left">重置</button>
             </span>
         </div>
     </div>
 <?php \yii\widgets\ActiveForm::end(); ?>
-
-    <div></div>
-    <div id="echarts" style="height: 500px;"></div>
     <div class="box-body">
 
 		<?= \yii\grid\GridView::widget([
@@ -29,15 +50,13 @@
 			//'filterModel' => $searchModel,
 			'columns' => [
 				'day_str',
+				'num_pv',
 				'num_uv',
 				'num_register_user',
 				'num_active_user',
 				'num_pv_product',
 				'num_uv_product',
 				'num_apply_product',
-				'platform_day_earnings',
-				'each_uv_earnings',
-				'each_apply_earnings'
 			],
 		]); ?>
     </div>
@@ -46,9 +65,7 @@
 $this->registerJsFile('@web/plugins/layui/layui/layui.js');
 $this->registerCssFile('@web/plugins/layui/layui/css/layui.css');
 $this->registerJsFile('@web/plugins/echarts/echarts.js');
-$url=\yii\helpers\Url::toRoute('weather');
-$keys=$data['keys'];
-$value=$data['value'];
+$url = \yii\helpers\Url::toRoute('weather');
 $js = <<<JS
 	var myChart=echarts.init(document.getElementById('echarts'));
 	var option = {
@@ -59,20 +76,9 @@ $js = <<<JS
 			yAxis: {
 				type: 'value'
 			},
-			series: [{
-                    data: $value,
-                    type: 'line',
-                    smooth: true,
-                    name:'收益',
-                    markLine : {
-	                    		data : [
-	                    		        {type : 'average', name: '平均值'}
-	                    		        
-	                    		]
-	                    	}
-                }],
+			series: $data,
             legend:{
-			    data:['收益']//显示右上角选择显示或者隐藏
+			    data:$legend,//显示右上角选择显示或者隐藏
 			},
 			toolbox: {
                 feature: {
@@ -87,7 +93,7 @@ $js = <<<JS
                 }
             },
             title: {
-                    text:'近30日总收益$total 平均收益$avg'
+                    text:'近30日总收益平均收益'
                 },
 			dataZoom: [{
                

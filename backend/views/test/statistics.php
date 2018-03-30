@@ -82,7 +82,7 @@ $js = <<<JS
                         data: data.keys
                     },
                     legend:{
-                        data:data.legend//显示右上角选择显示或者隐藏
+                        data:data.legend
                     },
                     series: data.data
                 });
