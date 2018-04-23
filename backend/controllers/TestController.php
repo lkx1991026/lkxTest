@@ -10,7 +10,6 @@ namespace backend\controllers;
 
 use app\models\CrmLog;
 use app\models\PCount;
-use backend\models\Area;
 use backend\models\BidataChannelApply;
 use backend\models\BidataChannelStats;
 use backend\models\BidataEarnings;
@@ -18,8 +17,6 @@ use backend\models\BidataEarningsSearch;
 use backend\models\BidataProductStats;
 use backend\models\BidataStats;
 use backend\models\BidataStatsSearch;
-use backend\models\Department;
-use backend\models\Position;
 use backend\models\UserCount;
 use backend\models\UserTest;
 use common\helpers\car\Che300;
@@ -31,13 +28,6 @@ use yii\web\Controller;
 
 class TestController extends Controller
 {
-	public function init()
-	{
-		parent::init();
-		ini_set('memory_limit', '2048M');
-		ini_set('max_execution_time', '0');
-		ini_set('tmp_table_size', '200M');
-	}
 	public function actionIndex()
 	{
 		return $this->render('index');
@@ -215,7 +205,7 @@ class TestController extends Controller
 			'name'=>'新增注册',
 			'type'=>'line',
 			'smooth'=> true,
-			],
+		],
 		];
 
 		$legend=['访客数量(uv)','活跃用户','新增注册'];
@@ -248,41 +238,16 @@ class TestController extends Controller
 			->select('c.channel_id,b.avg_apply_earning*count(a.user_name) earnings')
 			->groupBy('c.channel_id')
 			->orderBy('earnings DESC')
-			->limit(10)
-			->asArray()
-			->column();
-//			echo $data->createCommand()->rawSql;exit;
-//		var_dump($data);exit;
+			->limit(10);
+			echo $data->createCommand()->rawSql;exit;
 		//计算前十渠道对应每天的预估收益
 		$rank=(clone $model)
-			->andWhere(['c.channel_id'=>$data])
-			->select('c.channel_id,b.avg_apply_earning*count(a.user_name) earnings,a.day_str,c.channel_name')
+			->andWhere(['channel_id'=>$data])
+			->select('c.channel_id,b.avg_apply_earning*count(a.user_name) earnings,a.day_str,channel_name')
 			->groupBy('c.channel_id,a.day_str')
-			->orderBy('c.channel_id,a.day_str')
 			->asArray()
 			->all();
-
-		$tmp=[];
-		$keys=[];
-		$legend=[];
-		foreach ($rank as $v){
-			if(!in_array($v['day_str'],$keys)){
-				$keys[]=$v['day_str'];
-			}
-			if(!in_array($v['channel_name'],$legend)){
-				$legend[]=$v['channel_name'];
-			}
-			if(!isset($tmp[$v['channel_id']])){
-				$tmp[$v['channel_id']]=[
-					'name'=>$v['channel_name'],
-					'type'=>'line',
-					'smooth'=>true
-				];
-			}
-			$tmp[$v['channel_id']]['data'][]=$v['earnings'];
-
-		}
-		return $this->render('promote',['legend'=>json_encode($legend),'data'=>json_encode(array_values($tmp)),'keys'=>json_encode($keys),]);
+		var_dump($rank);
 	}
 	public function XXX($arr,$key){//第一个参数是一个二维数组,第二个参数是一个键
 		$tmp_arr=[];//保存这个二维数组下的所有一维数组中键为$key的元素值
@@ -295,70 +260,5 @@ class TestController extends Controller
 		}
 		return $arr;
 	}
-	public function actionTree(){
-		$department=Department::find()->where(['deleted'=>0])->select(['id','p_id pId','name','area_id'])->asArray()->all();
-		$area=Area::find()->where(['deleted'=>0])->select(['id','pid pId','name'])->asArray()->all();
-		$position=Position::find()->where(['deleted'=>0])->select(['id','department_id pId','name'])->asArray()->all();
-		$department=$this->getTree($department);
-		$area=$this->getTree($area);
 
-
-	}
-	public function getTree($array, $pid =0){
-
-		$arr=[];
-		foreach($array as $k=>$v){
-			if($v['pId']==$pid){
-				$v['children']=$this->getTree($array,$v['id']);
-				$arr[]=$v;
-			}
-		}
-		return $arr;
-	}
-	public function actionXX(){
-
-	header("Content-type: text/html; charset=utf-8");
-
-
-
-	$wordArr = $this->curl('./3.png');
-	var_dump($wordArr);exit;
-	if($wordArr['errNum'] == 0) {
-		var_dump($wordArr);
-	} else {
-		echo "识别出错:".$wordArr["errMsg"];
-	}
-	}
-	public function curl($img) {
-
-		$ch  = curl_init();
-		$url = 'https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token=24.356e4d733f74c8fd0da6a325ee61541b.2592000.1526527402.282335-11110908'; //百度ocr api
-		$header = array(
-			'Content-Type:application/x-www-form-urlencoded',
-		);
-
-		$data_temp = file_get_contents($img);
-		$data_temp = urlencode(base64_encode($data_temp));
-		//封装必要参数
-		$data = "languagetype=CHN_ENG&image=".$data_temp;
-
-		curl_setopt($ch, CURLOPT_HTTPHEADER , $header); // 添加apikey到header
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $data); // 添加参数
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch , CURLOPT_URL , $url); // 执行HTTP请求
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-		$res = curl_exec($ch);
-		if ($res === FALSE) {
-			echo "cURL Error: " . curl_error($ch);
-		}
-		curl_close($ch);
-
-		$temp_var = json_decode($res,true);
-		return $temp_var;
-
-	}
-	public function getPageData(){
-		$this->render('xxx');
-	}
 }

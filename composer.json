@@ -24,8 +24,7 @@
         "yiisoft/yii2-httpclient": "*",
         "workerman/workerman-for-win": "^3.5",
         "kartik-v/yii2-date-range": "1.2",
-        "kartik-v/yii2-widget-select2": "*",
-        "yiisoft/yii2-elasticsearch": "~2.0.0"
+        "kartik-v/yii2-widget-select2": "*"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.0.0",
