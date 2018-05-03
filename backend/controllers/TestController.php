@@ -23,6 +23,7 @@ use common\helpers\car\Che300;
 use common\helpers\DateHelper;
 use common\models\WxxCity;
 use function GuzzleHttp\Psr7\str;
+use yii\db\Query;
 use yii\helpers\ArrayHelper;
 use yii\web\Controller;
 
@@ -259,6 +260,122 @@ class TestController extends Controller
 			}
 		}
 		return $arr;
+	}
+	public static function actionXxx($user_id){
+
+		static $source_string = 'E5FCDG3HQA4B1NOPIJ2RSTUV67MWX89KLYZ';
+		$num = $user_id;
+		$code = '';
+		while ( $num > 0) {
+			$mod = $num % 35;
+			$num = ($num - $mod) / 35;
+			$code = $source_string[$mod].$code;
+		}
+		if(empty($code[3]))
+			$code = str_pad($code,4,'0',STR_PAD_LEFT);
+		return $code;
+
+		//下面不变,下面的方法的返回数据里面吧$result加上就可以了
+	}
+	public function actionDecode($code){
+		static $source_string = 'E5FCDG3HQA4B1NOPIJ2RSTUV67MWX89KLYZ';
+		if (strrpos($code, '0') !== false)
+			$code = substr($code, strrpos($code, '0')+1);
+		$len = strlen($code);
+		$code = strrev($code);
+		$num = 0;
+		for ($i=0; $i < $len; $i++) {
+			$num += strpos($source_string, $code[$i]) * pow(35, $i);
+		}
+		return $num;
+	}
+	public function actionTable(){
+		$result=(new Query())->from('department')->select(['name','description','create_time','sort'])->orderBy(['sort'=>SORT_ASC,'create_time'=>SORT_DESC])->all();
+		return $this->render('table',['data'=>$result]);
+	}
+	public function actionHongbao($amount,$num=10){
+
+		$total=0;
+		for($i=1;$i<=$num;$i++){
+			$rand_max=doubleval(($amount-$total)/($num-$i+1)*2);
+			if($i<$num){
+				$rand=doubleval(rand(1,$rand_max*100)/100);
+
+				$total+=$rand;
+
+			}else{
+				return ($amount-$total);
+			}
+
+		}
+	}
+	public function actionRecures(){
+		for($i=0;$i<=100;$i++){
+			echo self::actionHongbao(100,10).'<br>';
+		}
+	}
+	public function actionIsIdcard()
+	{
+		if(\Yii::$app->request->isPost){
+			$id = strtoupper($_POST['idcard']);
+			$regx = "/(^\d{15}$)|(^\d{17}([0-9]|X)$)/";
+			$arr_split = array();
+			if(!preg_match($regx, $id))
+			{
+				return 0;
+			}
+			if(15==strlen($id)) //检查15位
+			{
+				$regx = "/^(\d{6})+(\d{2})+(\d{2})+(\d{2})+(\d{3})$/";
+
+				@preg_match($regx, $id, $arr_split);
+				//检查生日日期是否正确
+				$dtm_birth = "19".$arr_split[2] . '/' . $arr_split[3]. '/' .$arr_split[4];
+				if(!strtotime($dtm_birth))
+				{
+					return 0;
+				} else {
+					return 1;
+				}
+			}
+			else      //检查18位
+			{
+				$regx = "/^(\d{6})+(\d{4})+(\d{2})+(\d{2})+(\d{3})([0-9]|X)$/";
+				@preg_match($regx, $id, $arr_split);
+				$dtm_birth = $arr_split[2] . '/' . $arr_split[3]. '/' .$arr_split[4];
+				if(!strtotime($dtm_birth)) //检查生日日期是否正确
+				{
+					return 0;
+				}
+				else
+				{
+					//检验18位身份证的校验码是否正确。
+					//校验位按照ISO 7064:1983.MOD 11-2的规定生成，X可以认为是数字10。
+					$arr_int = array(7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2);
+					$arr_ch = array('1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2');
+					$sign = 0;
+					for ( $i = 0; $i < 17; $i++ )
+					{
+						$b = (int) $id{$i};
+						$w = $arr_int[$i];
+						$sign += $b * $w;
+					}
+					$n = $sign % 11;
+					$val_num = $arr_ch[$n];
+					if ($val_num != substr($id,17, 1))
+					{
+						return 0;
+					}
+					else
+					{
+						return 1;
+					}
+				}
+			}
+		}else{
+			return $this->render('isidcard');
+		}
+
 	}
 
 }
