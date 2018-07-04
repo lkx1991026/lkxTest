@@ -373,7 +373,7 @@ class TestController extends Controller
 				}
 			}
 		}else{
-			return $this->render('isidcard');
+			return $this->render('isidcard');///testeste
 		}
 
 	}
