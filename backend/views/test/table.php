@@ -1,31 +1,23 @@
 <?php
 /* @var $this yii\web\View */
 ?>
-<head>
-</head>
-<body>
-    <table id="myTable">
-
-        <?php foreach($data as $v):?>
-            <tr>
-                <td><?=$v['user_name']?></td>
-            </tr>
-        <?php endforeach;?>
-
-    </table>
-</body>
-
+<form class="xx" action="<?=\yii\helpers\Url::toRoute(['table'])?>" method="post" enctype="multipart/form-data">
+    1.<input type="file" name="av" value=""/>
+    2.<input type="text" name="xx" value="2"/>
+    3.<input type="text" name="xx" value="3"/>
+    <input type="submit" value="提交">
+</form>
 <?php
-$this->registerCssFile('@web/sortable/css/base/jquery-ui-1.9.2.custom.min.css');
-$this->registerJsFile('@web/sortable/js/jquery-1.8.3.js');
-$this->registerJsFile('@web/sortable/js/jquery-ui-1.9.2.custom.min.js');
-
-$js = <<<JS
-        $(function() {
-          $('#myTable').sortable();
+$js=<<<JS
+    $(function() {
+     var change=function() {
+        $('.xx input:not([name=remark])').each(function() {
+        console.log($(this).val());
         })
-        
-
+        console.log($(".xx").html());
+     }
+     $('input').blur(change);
+    })
+    
 JS;
 $this->registerJs($js);
-

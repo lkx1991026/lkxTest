@@ -29,6 +29,9 @@ use yii\web\Controller;
 
 class TestController extends Controller
 {
+	public function init(){
+		$this->enableCsrfValidation = false;
+	}
 	public function actionIndex()
 	{
 		return $this->render('index');
@@ -290,8 +293,11 @@ class TestController extends Controller
 		return $num;
 	}
 	public function actionTable(){
-		$result=(new Query())->from('department')->select(['name','description','create_time','sort'])->orderBy(['sort'=>SORT_ASC,'create_time'=>SORT_DESC])->all();
-		return $this->render('table',['data'=>$result]);
+		if(\Yii::$app->request->post()){
+			var_dump(11);exit;
+		}
+		var_dump(json_decode('{"code":0,"message":"success","result":{"appKey":"8FB345B8693CCD00D126B8F92445E66F","account":"成都晟思","accessToken":"738384ee59945fa8c7ec1cabc5f028f6","refreshToken":"508d9069679d028d343b085da45d2f61","expiresIn":7200,"time":"2018-05-24 15:37:38"}}'),true);
+		return $this->render('table',[]);
 	}
 	public function actionHongbao($amount,$num=10){
 
@@ -376,6 +382,12 @@ class TestController extends Controller
 			return $this->render('isidcard');
 		}
 
+	}
+	public function actionCal(){
+		$data=Model::xxxx(1)->toarray()->get();
+		foreach($data as &$v){//你查询出来的都是parent_id=0的所以没必要判断
+			$v['children']=Model::find('这里写where条件(parent_id='.$v['id'].')')->toarray()->get();
+		}
 	}
 
 }
