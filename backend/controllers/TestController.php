@@ -261,21 +261,8 @@ class TestController extends Controller
 		}
 		return $arr;
 	}
-	public static function actionXxx($user_id){
-
-		static $source_string = 'E5FCDG3HQA4B1NOPIJ2RSTUV67MWX89KLYZ';
-		$num = $user_id;
-		$code = '';
-		while ( $num > 0) {
-			$mod = $num % 35;
-			$num = ($num - $mod) / 35;
-			$code = $source_string[$mod].$code;
-		}
-		if(empty($code[3]))
-			$code = str_pad($code,4,'0',STR_PAD_LEFT);
-		return $code;
-
-		//下面不变,下面的方法的返回数据里面吧$result加上就可以了
+	public function actionXxx(){
+		return $this->render('xxx');
 	}
 	public function actionDecode($code){
 		static $source_string = 'E5FCDG3HQA4B1NOPIJ2RSTUV67MWX89KLYZ';
