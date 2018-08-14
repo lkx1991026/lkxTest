@@ -360,8 +360,36 @@ class TestController extends Controller
 				}
 			}
 		}else{
-			return $this->render('isidcard');///testeste
+			return $this->renderAjax('isidcard');///testeste
 		}
+
+	}
+	//计算第n位字符串长度
+	//1,2,3,4,11,21,31,41,12,22,32,42,13,23,33,43
+	public function actionCalculate($n=7){
+		static $arr=[1,2,3,4];
+		//分组获取$n在字符串长度,分组规律1:4个;2:4*4个;3:4*4*4个,
+		function sum($i){
+			if($i==1){
+				return 4;
+			}else{
+				return sum($i-1)+pow(4,$i);
+			}
+		}
+		$i=1;
+		while(sum($i)<=$n){
+			$i++;
+		}
+		$str='';
+		for($j=1;$j<=$i;$j++){
+			if($n>=4){
+				$n=$n-sum($i-1);
+			}
+			$str .= $arr[$n%4-1];
+
+		}
+
+		echo $str;
 
 	}
 
